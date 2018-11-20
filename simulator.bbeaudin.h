@@ -18,6 +18,8 @@ typedef enum EventTypeEnum {
 	PROCESS_TIMESLICE_EXPIRES
 } EventType;
 
+// check event type and process accordingly
 void handleEvent(Event event);
 
-
+// initialize all of the events
+void eventInit();
