@@ -1,7 +1,7 @@
 #include "simulator.bbeaudin.h"
 #include <stdio.h>
 #include <stdlib.h>
-#define TIME_QUANTUM 4
+#define RUN_TIME 4
 
 int enqueue(PQueue *myQ, int priority, DataNode *data) {
   PQueueNode *newNode = (PQueueNode *) malloc(sizeof(PQueueNode));
@@ -67,26 +67,27 @@ int getMinPriority(PQueue *myQ) {
 }
 
 void handleEvent(Event myEvent) {	
-	switch (myEvent->eventType) {
+	switch (myEvent.eventType) {
 		case PROCESS_SUBMITTED:
-			if (cpuIsIdle) {
+			if (1 == 1) {
 				Event *nextEvent = (Event *) malloc(sizeof(Event));
 			}
 			break;
 		case PROCESS_STARTS:
 			break;
 		case PROCESS_ENDS:
-			break:
+			break;
 		case PROCESS_TIMESLICE_EXPIRES:
 			break;
 	}
 }
 
 int main() {
-	int cpuIdIdle;
+	int cpuIsIdle, currentTime;
 	PQueue eventQueue;
 	PQueue cpuQueue;
 	DataNode *data;
+	Event *event;
 
 	eventQueue.head = NULL;
 	eventQueue.tail = NULL;
@@ -117,20 +118,20 @@ int main() {
 	data->event = e1;
 	enqueue(&eventQueue, 1, data);
 	data->event = e2;
-	enqueue(&eventQueue, 2, e2);
+	enqueue(&eventQueue, 2, data);
 	data->event = e3;
-	enqueue(&eventQueue, 3, e3);
+	enqueue(&eventQueue, 3, data);
 	data->event = e4;
-	enqueue(&eventQueue, 4, e4);
+	enqueue(&eventQueue, 4, data);
 	data->event = e5;
-	enqueue(&eventQueue, 5, e5);
+	enqueue(&eventQueue, 5, data);
 	
-	currentTime = getMinPriority(eventQueue);
-	event = dequeue(eventQueue);
+	currentTime = getMinPriority(&eventQueue);
+	event =  dequeue(&eventQueue)->event;
 	while (event != NULL && currentTime < RUN_TIME) {
-		handleEvent(event);
-		currentTime = getMinPriority(eventQueue);
-		event = dequeue(eventQueue);
+		handleEvent(*event);
+		currentTime = getMinPriority(&eventQueue);
+		event = dequeue(&eventQueue)->event;
 	}
 
 	return(0);
