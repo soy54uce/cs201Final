@@ -46,7 +46,7 @@ DataNode * dequeue(PQueue *myQ) {
 int printQueue(PQueue *myQ) {
   PQueueNode *currentNode = myQ->head;
   while (currentNode != NULL) {
-    printf("| %d %s |\n", currentNode->priority, currentNode->data->event);
+    //printf("| %d %s |\n", currentNode->priority, currentNode->data->event);
     currentNode = currentNode->next;
   }	
   return(0);
@@ -86,7 +86,7 @@ int main() {
 	int cpuIsIdle, currentTime;
 	PQueue eventQueue;
 	PQueue cpuQueue;
-	DataNode *data;
+	DataNode *data = (DataNode *) malloc(sizeof(DataNode));
 	Event *event;
 
 	eventQueue.head = NULL;
@@ -136,6 +136,7 @@ int main() {
 	currentTime = getMinPriority(&eventQueue);
 	event =  dequeue(&eventQueue)->event;
 	while (event != NULL && currentTime < RUN_TIME) {
+		printf("looping\n");
 		handleEvent(*event);
 		currentTime = getMinPriority(&eventQueue);
 		event = dequeue(&eventQueue)->event;
