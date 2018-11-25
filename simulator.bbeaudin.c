@@ -4,8 +4,7 @@
 #include <stdlib.h>
 #define TIME_QUANTUM 4
 
-
-void handleEvent(Event event) {	
+void handleEvent(Event myEvent) {	
 	switch (event->eventType) {
 		case PROCESS_SUBMITTED:
 			if (cpuIsIdle) {
