@@ -1,3 +1,22 @@
+typedef enum EventTypeEnum {
+ PROCESS_SUBMITTED,
+ PROCESS_STARTS,
+ PROCESS_ENDS,
+ PROCESS_TIMESLICE_EXPIRES
+} EventType;
+
+typedef struct {
+ int pid;
+ int burstTime;
+ int waitTime;
+ int numPreemptions;
+ int lastTime;
+} Process;
+
+typedef struct {
+ EventType eventType;
+ Process *process;
+} Event;
 
 typedef struct {
   Event *event;
@@ -15,25 +34,6 @@ typedef struct {
   PQueueNode *tail;
 } PQueue;
 
-typedef struct {
- int pid;
- int burstTime;
- int waitTime;
- int numPreemptions;
- int lastTime;
-} Process;
-
-typedef struct {
- EventType eventType;
- Process *process;
-} Event;
-
-typedef enum EventTypeEnum {
- PROCESS_SUBMITTED,
- PROCESS_STARTS,
- PROCESS_ENDS,
- PROCESS_TIMESLICE_EXPIRES
-} EventType;
 
 int enqueue(PQueue *pqueue, int priority, DataNode *data);
 // put node in queue in priority order; in case of tie in priority,

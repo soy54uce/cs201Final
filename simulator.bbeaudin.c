@@ -46,7 +46,7 @@ DataNode * dequeue(PQueue *myQ) {
 int printQueue(PQueue *myQ) {
   PQueueNode *currentNode = myQ->head;
   while (currentNode != NULL) {
-    printf("| %d %s |\n", currentNode->priority, currentNode->data->name);
+    printf("| %d %s |\n", currentNode->priority, currentNode->data->event);
     currentNode = currentNode->next;
   }	
   return(0);
@@ -79,6 +79,7 @@ void handleEvent(Event myEvent) {
 			break:
 		case PROCESS_TIMESLICE_EXPIRES:
 			break;
+	}
 }
 
 int main() {
