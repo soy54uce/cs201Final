@@ -118,6 +118,7 @@ void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int curre
 				newEvent->eventType = PROCESS_STARTS;
 				newEvent->process = myEvent->process;
 				queueEvent(eventQueue, currentTime, newEvent); 
+				free(myEvent);
 			} else {
 				Process *readyProcess = myEvent->process;
 				int priority;
@@ -126,6 +127,7 @@ void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int curre
 					priority = readyProcess->burstTime;
 				}
 				queueProcess(cpuQueue, priority, readyProcess);
+				free(myEvent);
 			}
 			break;
 		case PROCESS_STARTS:
@@ -134,7 +136,9 @@ void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int curre
 				Event *newEvent = (Event *) malloc(sizeof(Event));
 				newEvent->eventType = PROCESS_ENDS;
 				newEvent->process = myEvent->process;
-				queueEvent(eventQueue, currentTime + myEvent->process->burstTime, newEvent);
+				newEvent->process->waitTime = currentTime;
+				queueEvent(eventQueue, currentTime + newEvent->process->burstTime, newEvent);
+				free(myEvent);
 				*idle = 0;
 			} else {
  				/*if burstTime for this process > quantum then
@@ -147,17 +151,20 @@ void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int curre
 			;//update stats about this process
 			Process *finishedProcess;
 			finishedProcess = myEvent->process;
-			finishedProcess->waitTime = currentTime;
 			printf("t = %d , PROCESS_ENDS, pid = %d wait time: %d\n", currentTime, finishedProcess->pid, finishedProcess->waitTime); 
-			if (peek(cpuQueue) != NULL) {
-				Process *nextProcess;
-				nextProcess =  dequeue(cpuQueue);
-				Event *newEvent = (Event *) malloc(sizeof(Event));
+			free(myEvent);
+			Event *newEvent = (Event *) malloc(sizeof(Event));
+			Process *nextProcess;
+			nextProcess = (peek(cpuQueue) == NULL) ? NULL : dequeue(cpuQueue);
+			
+			if (nextProcess == NULL) {
+				break;
+			} else {
+				printf("queueing p%d at %d\n", nextProcess->pid, currentTime); 
 				newEvent->eventType = PROCESS_STARTS;
-				newEvent->process = myEvent->process;
+				newEvent->process = nextProcess;
 				*idle = 1;
 				queueEvent(eventQueue, currentTime, newEvent);
-				printf("process %d starting\n", newEvent->process->pid);
 			}
 			break;
 		case PROCESS_TIMESLICE_EXPIRES:
@@ -234,14 +241,16 @@ int main() {
 //	printQueue(&eventQueue, &cpuQueue);
 	currentTime = getMinPriority(&eventQueue);
 	cpuIsIdle = 1;	
-	event =  dequeue(&eventQueue);
 	while (event != NULL) {
-//		printQueue(&eventQueue, &cpuQueue);
+		event = (peek(&eventQueue) == NULL) ? NULL :dequeue(&eventQueue);
+		printf("handling event\n");
 		handleEvent(event, &eventQueue, &cpuQueue, currentTime, &cpuIsIdle);	
+		printf("getting currentTime\n");
 		currentTime = getMinPriority(&eventQueue);
 		printf("checking eventQueue\n");
-		event = (peek(&eventQueue) == NULL) ? NULL :dequeue(&eventQueue);
-		printf("checked\n");
+//		event = (peek(&eventQueue) == NULL) ? NULL :dequeue(&eventQueue);
+		printf(event);
+		printQueue(&eventQueue, &cpuQueue);
 	}
 
 	return(0);
