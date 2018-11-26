@@ -112,7 +112,7 @@ int getMinPriority(PQueue *myQ) {
 void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int currentTime, int *idle) {	
 	switch (myEvent->eventType) {
 		case PROCESS_SUBMITTED:
-			printf("t = %d , PROCESS_SUBMITTED, pid = %d\n", currentTime, myEvent->process->pid); 
+			printf("t = %d , %s, pid = %d\n", currentTime, getEventTypeString(myEvent->eventType), myEvent->process->pid); 
 			if (*idle) {
 				Event *newEvent = (Event *) malloc(sizeof(Event));
 				newEvent->eventType = PROCESS_STARTS;
@@ -131,7 +131,7 @@ void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int curre
 			}
 			break;
 		case PROCESS_STARTS:
-			printf("t = %d , PROCESS_STARTS, pid = %d\n", currentTime, myEvent->process->pid); 
+			printf("t = %d , %s, pid = %d\n", currentTime, getEventTypeString(myEvent->eventType), myEvent->process->pid); 
 			if (SCHED_TYPE == 0 || SCHED_TYPE == 1) {
 				Event *newEvent = (Event *) malloc(sizeof(Event));
 				newEvent->eventType = PROCESS_ENDS;
@@ -151,7 +151,7 @@ void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int curre
 			;//update stats about this process
 			Process *finishedProcess;
 			finishedProcess = myEvent->process;
-			printf("t = %d , PROCESS_ENDS, pid = %d wait time: %d\n", currentTime, finishedProcess->pid, finishedProcess->waitTime); 
+			printf("t = %d , %s, pid = %d\n", currentTime, getEventTypeString(myEvent->eventType), myEvent->process->pid); 
 			free(myEvent);
 			Event *newEvent = (Event *) malloc(sizeof(Event));
 			Process *nextProcess;
@@ -179,6 +179,15 @@ void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int curre
 				queueEvent(eventQueue, currentTime, newEvent);
 			} 
 			break;
+	}
+}
+
+char* getEventTypeString(EventType eventType) {
+	switch (eventType) {
+		case PROCESS_SUBMITTED: return "PROCESS_SUBMITTED";
+		case PROCESS_STARTS: return "PROCESS_STARTS";
+		case PROCESS_ENDS: return "PROCESS_ENDS";
+		case PROCESS_TIMESLICE_EXPIRES: return "PROCESS_TIMESLICE_EXPIRES";
 	}
 }
 
@@ -242,15 +251,15 @@ int main() {
 	currentTime = getMinPriority(&eventQueue);
 	cpuIsIdle = 1;	
 	while (event != NULL) {
-		event = (peek(&eventQueue) == NULL) ? NULL :dequeue(&eventQueue);
-		printf("handling event\n");
-		handleEvent(event, &eventQueue, &cpuQueue, currentTime, &cpuIsIdle);	
-		printf("getting currentTime\n");
-		currentTime = getMinPriority(&eventQueue);
-		printf("checking eventQueue\n");
-//		event = (peek(&eventQueue) == NULL) ? NULL :dequeue(&eventQueue);
-		printf(event);
 		printQueue(&eventQueue, &cpuQueue);
+		event = (peek(&eventQueue) == NULL) ? NULL :dequeue(&eventQueue);
+//		printf("handling event\n");
+		handleEvent(event, &eventQueue, &cpuQueue, currentTime, &cpuIsIdle);	
+//		printf("getting currentTime\n");
+		currentTime = getMinPriority(&eventQueue);
+//		printf("checking eventQueue\n");
+//		event = (peek(&eventQueue) == NULL) ? NULL :dequeue(&eventQueue);
+		//printf(event);
 	}
 
 	return(0);

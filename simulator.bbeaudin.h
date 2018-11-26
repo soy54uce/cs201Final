@@ -54,3 +54,8 @@ void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int curre
 
 // initialize all of the events
 void eventInit();
+
+char* getEventTypeString(EventType eventType);
+
+void printEvent(Event anyEvent);
+void printProcess(Process anyProcess);
