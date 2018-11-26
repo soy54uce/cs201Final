@@ -67,16 +67,17 @@ int getMinPriority(PQueue *myQ) {
   return low;
 }
 
-void handleEvent(Event myEvent, PQueue eventQueue, PQueue cpuQueue, int currentTime, int CPUisIdle) {	
-	switch (myEvent.eventType) {
+void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int currentTime, int *CPUisIdle) {	
+	switch (myEvent->eventType) {
 		case PROCESS_SUBMITTED:
-			DataNode *data = (DataNode *) malloc(sizeof(Event));
+			;
+			DataNode *data  = (DataNode *) malloc(sizeof(Event));
 			if (CPUisIdle) {
 				Event *newEvent = (Event *) malloc(sizeof(Event));
 				newEvent->eventType = PROCESS_STARTS;
 				newEvent->process = myEvent->process;
 				data->event = newEvent;
-				enqueue(&myQueue, currentTime, data); 
+				enqueue(eventQueue, currentTime, data); 
 			} else {
 				Process *readyProcess = myEvent->process;
 				int priority;
@@ -85,7 +86,7 @@ void handleEvent(Event myEvent, PQueue eventQueue, PQueue cpuQueue, int currentT
 					priority = readyProcess->burstTime;
 				}
 				data->process = readyProcess;
-				enqueue(&cpuQueue, priority, data);
+				enqueue(cpuQueue, priority, data);
 			}
 			break;
 		case PROCESS_STARTS:
@@ -153,7 +154,7 @@ int main() {
 	event =  dequeue(&eventQueue)->event;
 	while (event != NULL) {
 		printf("looping\n");
-		handleEvent(*Event, &eventQueue, &cpuQueue, currentTime, CPUisIdle);	
+		handleEvent(event, &eventQueue, &cpuQueue, currentTime, &cpuIsIdle);	
 		currentTime = getMinPriority(&eventQueue);
 		printf("Handling Event %d\n", currentTime);
 		event = (peek(&eventQueue) == NULL) ? NULL :dequeue(&eventQueue)->event;

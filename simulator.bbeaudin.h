@@ -53,7 +53,7 @@ int getMinPriority(PQueue *pqueue);
 // return priority of the first node in queue; return -1 if queue is empty
 
 // check event type and process accordingly
-void handleEvent(Event myEvent, PQueue eventQueue, PQueue cpuQueue, int currentTime, int CPUisIdle);	
+void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int currentTime, int *CPUisIdle);	
 
 // initialize all of the events
 void eventInit();
