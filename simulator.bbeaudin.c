@@ -68,6 +68,7 @@ int getMinPriority(PQueue *myQ) {
 }
 
 void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int currentTime, int *CPUisIdle) {	
+	printf("t = %d , %s, pid = %d\n", currentTime, myEvent->eventType, myEvent->process->pid); 
 	switch (myEvent->eventType) {
 		case PROCESS_SUBMITTED:
 			;
@@ -115,13 +116,13 @@ int main() {
 	Process *p3 = (Process *) malloc(sizeof(Event));
 	Process *p4 = (Process *) malloc(sizeof(Event));
 	Process *p5 = (Process *) malloc(sizeof(Event));
-	printf("Processes created\n");
+	//printf("Processes created\n");
 	Event *e1 = (Event *) malloc(sizeof(Event));
 	Event *e2 = (Event *) malloc(sizeof(Event));
 	Event *e3 = (Event *) malloc(sizeof(Event));
 	Event *e4 = (Event *) malloc(sizeof(Event));
 	Event *e5 = (Event *) malloc(sizeof(Event));
-	printf("Events created\n");
+	//printf("Events created\n");
 	
 	e1->eventType = PROCESS_SUBMITTED;
 	e1->process = p1;
@@ -133,12 +134,12 @@ int main() {
 	e4->process = p1;
 	e5->eventType = PROCESS_SUBMITTED;
 	e5->process = p1;
-	printf("Event attributes created\n");
+	//printf("Event attributes created\n");
 
 	data->event = e1;
-	printf("First event added to data value\n");
+	//printf("First event added to data value\n");
 	enqueue(&eventQueue, 1, data);
-	printf("First event queued\n");
+	//printf("First event queued\n");
 	data->event = e2;
 	enqueue(&eventQueue, 2, data);
 	data->event = e3;
@@ -147,16 +148,16 @@ int main() {
 	enqueue(&eventQueue, 4, data);
 	data->event = e5;
 	enqueue(&eventQueue, 5, data);
-	printf("Events queued\n");
+	//printf("Events queued\n");
 	
 	currentTime = getMinPriority(&eventQueue);
-	printf("Handling Event %d\n", currentTime);
+	//printf("Handling Event %d\n", currentTime);
 	event =  dequeue(&eventQueue)->event;
 	while (event != NULL) {
-		printf("looping\n");
+	//	printf("looping\n");
 		handleEvent(event, &eventQueue, &cpuQueue, currentTime, &cpuIsIdle);	
 		currentTime = getMinPriority(&eventQueue);
-		printf("Handling Event %d\n", currentTime);
+	//	printf("Handling Event %d\n", currentTime);
 		event = (peek(&eventQueue) == NULL) ? NULL :dequeue(&eventQueue)->event;
 	}
 
