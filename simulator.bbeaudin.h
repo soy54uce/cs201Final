@@ -18,14 +18,10 @@ typedef struct {
  Process *process;
 } Event;
 
-typedef struct {
-  Event *event;
-  Process *process;
-} DataNode;
-
 typedef struct PQN {
   int priority;
-  DataNode *data;
+  Event *event;
+  Process *process;
   struct PQN *next;
 } PQueueNode;
 
@@ -35,11 +31,12 @@ typedef struct {
 } PQueue;
 
 
-int enqueue(PQueue *pqueue, int priority, DataNode *data);
+int queueEvent(PQueue *pqueue, int priority, Event *event);
 // put node in queue in priority order; in case of tie in priority,
 // then put node after all nodes with the specified priority
+int queueProcess(PQueue *pqueue, int priority, Process *process);
 
-DataNode * dequeue(PQueue *pqueue);
+void * dequeue(PQueue *pqueue);
 // return NULL is queue is empty; otherwise return first node in queue
 
 int printQueue(PQueue *pqueue);
