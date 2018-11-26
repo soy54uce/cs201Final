@@ -102,11 +102,11 @@ int getMinPriority(PQueue *myQ) {
 }
 
 void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int currentTime, int *CPUisIdle) {	
-		
+	int *idle = CPUisIdle;	
 	switch (myEvent->eventType) {
 		case PROCESS_SUBMITTED:
 			printf("t = %d , PROCESS_SUBMITTED, pid = %d\n", currentTime, myEvent->process->pid); 
-			if (CPUisIdle) {
+			if (idle) {
 				Event *newEvent = (Event *) malloc(sizeof(Event));
 				newEvent->eventType = PROCESS_STARTS;
 				newEvent->process = myEvent->process;
@@ -127,6 +127,7 @@ void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int curre
 				Event *newEvent = (Event *) malloc(sizeof(Event));
 				newEvent->eventType = PROCESS_ENDS;
 				newEvent->process = myEvent->process;
+				idle = 0;
 				queueEvent(eventQueue, currentTime + myEvent->process->burstTime, newEvent);
 			} else {
  				/*if burstTime for this process > quantum then
@@ -144,6 +145,7 @@ void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int curre
 				Event *newEvent = (Event *) malloc(sizeof(Event));
 				newEvent->eventType = PROCESS_STARTS;
 				newEvent->process = myEvent->process;
+				idle = (int *)1;
 				queueEvent(eventQueue, currentTime, newEvent);
 			}
 			break;
@@ -220,13 +222,13 @@ int main() {
 	//printf("Events queued\n");
 	printQueue(&eventQueue);
 	currentTime = getMinPriority(&eventQueue);
-	printf("Handling Event %d\n", currentTime);
+	//printf("Handling Event %d\n", currentTime);
 	event =  dequeue(&eventQueue);
 	while (event != NULL) {
 	//	printf("looping\n");
 		handleEvent(event, &eventQueue, &cpuQueue, currentTime, &cpuIsIdle);	
 		currentTime = getMinPriority(&eventQueue);
-		printf("Handling Event %d\n", event->process->pid);
+	//	printf("Handling Event %d\n", event->process->pid);
 		event = (peek(&eventQueue) == NULL) ? NULL :dequeue(&eventQueue);
 	}
 
