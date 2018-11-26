@@ -39,7 +39,7 @@ int queueProcess(PQueue *pqueue, int priority, Process *process);
 void * dequeue(PQueue *pqueue);
 // return NULL is queue is empty; otherwise return first node in queue
 
-int printQueue(PQueue *pqueue);
+int printQueue(PQueue *pqueue, PQueue *cpuQueue);
 // print queue from head to tail
 
 void * peek(PQueue *pqueue);

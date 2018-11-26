@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #define RUN_TIME 4
+//0 for FCFS, 1 for SJF, 2 for ROUND ROBIN
 #define SCHED_TYPE 0
 
 int queueProcess(PQueue *myQ, int priority, Process *process) {
@@ -78,11 +79,18 @@ void * dequeue(PQueue *myQ) {
   }
 }
 
-int printQueue(PQueue *myQ) {
-  PQueueNode *currentNode = myQ->head;
-  while (currentNode != NULL) {
-    printf("| %d %d |\n", currentNode->priority, currentNode->event->process->pid);
-    currentNode = currentNode->next;
+int printQueue(PQueue *eventQ, PQueue *cpuQ) {
+  PQueueNode *currentEvent = eventQ->head;
+  PQueueNode *currentReadyProcess = cpuQ->head;
+  printf("---\neventQueue\n---\n");	
+  while (currentEvent != NULL) {
+    printf("| %d %d |\n", currentEvent->priority, currentEvent->event->process->pid);
+    currentEvent = currentEvent->next;
+  }
+  printf("---\ncpuQueue\n---\n");	
+  while (currentReadyProcess != NULL) {
+    printf("| %d %d |\n", currentReadyProcess->priority, currentReadyProcess->process->pid); 
+    currentReadyProcess = currentReadyProcess->next;
   }	
   return(0);
 }
@@ -101,8 +109,8 @@ int getMinPriority(PQueue *myQ) {
   return low;
 }
 
-void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int currentTime, int *CPUisIdle) {	
-	int *idle = CPUisIdle;	
+void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int currentTime, int *idle) {	
+	printf("CPU is idle?%d\n", *idle);
 	switch (myEvent->eventType) {
 		case PROCESS_SUBMITTED:
 			printf("t = %d , PROCESS_SUBMITTED, pid = %d\n", currentTime, myEvent->process->pid); 
@@ -127,8 +135,8 @@ void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int curre
 				Event *newEvent = (Event *) malloc(sizeof(Event));
 				newEvent->eventType = PROCESS_ENDS;
 				newEvent->process = myEvent->process;
-				idle = 0;
 				queueEvent(eventQueue, currentTime + myEvent->process->burstTime, newEvent);
+				*idle = 0;
 			} else {
  				/*if burstTime for this process > quantum then
 				 create a new event PROCESS_TIMESLICE_EXPIRES at currentTime + quantum
@@ -145,7 +153,7 @@ void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int curre
 				Event *newEvent = (Event *) malloc(sizeof(Event));
 				newEvent->eventType = PROCESS_STARTS;
 				newEvent->process = myEvent->process;
-				idle = (int *)1;
+				*idle = 1;
 				queueEvent(eventQueue, currentTime, newEvent);
 			}
 			break;
@@ -205,30 +213,29 @@ int main() {
 	
 	e1->eventType = PROCESS_SUBMITTED;
 	e1->process = p1;
-	queueEvent(&eventQueue, 1, e1);
+	queueEvent(&eventQueue, 0, e1);
 	e2->eventType = PROCESS_SUBMITTED;
 	e2->process = p2;
-	queueEvent(&eventQueue, 2, e2);
+	queueEvent(&eventQueue, 3, e2);
 	e3->eventType = PROCESS_SUBMITTED;
 	e3->process = p3;
-	queueEvent(&eventQueue, 3, e3);
+	queueEvent(&eventQueue, 4, e3);
 	e4->eventType = PROCESS_SUBMITTED;
 	e4->process = p4;
-	queueEvent(&eventQueue, 4, e4);
+	queueEvent(&eventQueue, 6, e4);
 	e5->eventType = PROCESS_SUBMITTED;
 	e5->process = p5;
-	queueEvent(&eventQueue, 5, e5);
+	queueEvent(&eventQueue, 6, e5);
 
 	//printf("Events queued\n");
-	printQueue(&eventQueue);
+	printQueue(&eventQueue, &cpuQueue);
 	currentTime = getMinPriority(&eventQueue);
-	//printf("Handling Event %d\n", currentTime);
+	cpuIsIdle = 1;	
 	event =  dequeue(&eventQueue);
 	while (event != NULL) {
-	//	printf("looping\n");
+		printQueue(&eventQueue, &cpuQueue);
 		handleEvent(event, &eventQueue, &cpuQueue, currentTime, &cpuIsIdle);	
 		currentTime = getMinPriority(&eventQueue);
-	//	printf("Handling Event %d\n", event->process->pid);
 		event = (peek(&eventQueue) == NULL) ? NULL :dequeue(&eventQueue);
 	}
 
