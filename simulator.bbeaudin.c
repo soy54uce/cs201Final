@@ -110,11 +110,10 @@ int getMinPriority(PQueue *myQ) {
 }
 
 void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int currentTime, int *idle) {	
-	printf("CPU is idle?%d\n", *idle);
 	switch (myEvent->eventType) {
 		case PROCESS_SUBMITTED:
 			printf("t = %d , PROCESS_SUBMITTED, pid = %d\n", currentTime, myEvent->process->pid); 
-			if (idle) {
+			if (*idle) {
 				Event *newEvent = (Event *) malloc(sizeof(Event));
 				newEvent->eventType = PROCESS_STARTS;
 				newEvent->process = myEvent->process;
@@ -145,16 +144,20 @@ void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int curre
 			}
 			break;
 		case PROCESS_ENDS:
-			printf("t = %d , PROCESS_ENDS, pid = %d\n", currentTime, myEvent->process->pid); 
-			//update stats about this process
+			;//update stats about this process
+			Process *finishedProcess;
+			finishedProcess = myEvent->process;
+			finishedProcess->waitTime = currentTime;
+			printf("t = %d , PROCESS_ENDS, pid = %d wait time: %d\n", currentTime, finishedProcess->pid, finishedProcess->waitTime); 
 			if (peek(cpuQueue) != NULL) {
-				Process *endingProcess;
-				endingProcess =  dequeue(cpuQueue);
+				Process *nextProcess;
+				nextProcess =  dequeue(cpuQueue);
 				Event *newEvent = (Event *) malloc(sizeof(Event));
 				newEvent->eventType = PROCESS_STARTS;
 				newEvent->process = myEvent->process;
 				*idle = 1;
 				queueEvent(eventQueue, currentTime, newEvent);
+				printf("process %d starting\n", newEvent->process->pid);
 			}
 			break;
 		case PROCESS_TIMESLICE_EXPIRES:
@@ -228,15 +231,17 @@ int main() {
 	queueEvent(&eventQueue, 6, e5);
 
 	//printf("Events queued\n");
-	printQueue(&eventQueue, &cpuQueue);
+//	printQueue(&eventQueue, &cpuQueue);
 	currentTime = getMinPriority(&eventQueue);
 	cpuIsIdle = 1;	
 	event =  dequeue(&eventQueue);
 	while (event != NULL) {
-		printQueue(&eventQueue, &cpuQueue);
+//		printQueue(&eventQueue, &cpuQueue);
 		handleEvent(event, &eventQueue, &cpuQueue, currentTime, &cpuIsIdle);	
 		currentTime = getMinPriority(&eventQueue);
+		printf("checking eventQueue\n");
 		event = (peek(&eventQueue) == NULL) ? NULL :dequeue(&eventQueue);
+		printf("checked\n");
 	}
 
 	return(0);
