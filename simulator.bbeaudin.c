@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #define RUN_TIME 4
+#define SCHED_TYPE 0
 
 int enqueue(PQueue *myQ, int priority, DataNode *data) {
   PQueueNode *newNode = (PQueueNode *) malloc(sizeof(PQueueNode));
@@ -66,11 +67,25 @@ int getMinPriority(PQueue *myQ) {
   return low;
 }
 
-void handleEvent(Event myEvent) {	
+void handleEvent(Event myEvent, PQueue eventQueue, PQueue cpuQueue, int currentTime, int CPUisIdle) {	
 	switch (myEvent.eventType) {
 		case PROCESS_SUBMITTED:
-			if (1 == 1) {
-				Event *nextEvent = (Event *) malloc(sizeof(Event));
+			DataNode *data = (DataNode *) malloc(sizeof(Event));
+			if (CPUisIdle) {
+				Event *newEvent = (Event *) malloc(sizeof(Event));
+				newEvent->eventType = PROCESS_STARTS;
+				newEvent->process = myEvent->process;
+				data->event = newEvent;
+				enqueue(&myQueue, currentTime, data); 
+			} else {
+				Process *readyProcess = myEvent->process;
+				int priority;
+				priority = 0;
+				if (SCHED_TYPE == 2) {
+					priority = readyProcess->burstTime;
+				}
+				data->process = readyProcess;
+				enqueue(&cpuQueue, priority, data);
 			}
 			break;
 		case PROCESS_STARTS:
@@ -134,12 +149,14 @@ int main() {
 	printf("Events queued\n");
 	
 	currentTime = getMinPriority(&eventQueue);
+	printf("Handling Event %d\n", currentTime);
 	event =  dequeue(&eventQueue)->event;
-	while (event != NULL && currentTime < RUN_TIME) {
+	while (event != NULL) {
 		printf("looping\n");
-		handleEvent(*event);
+		handleEvent(*Event, &eventQueue, &cpuQueue, currentTime, CPUisIdle);	
 		currentTime = getMinPriority(&eventQueue);
-		event = dequeue(&eventQueue)->event;
+		printf("Handling Event %d\n", currentTime);
+		event = (peek(&eventQueue) == NULL) ? NULL :dequeue(&eventQueue)->event;
 	}
 
 	return(0);
