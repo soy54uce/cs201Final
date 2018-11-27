@@ -4,7 +4,7 @@
 #define RUN_TIME 4
 //0 for FCFS, 1 for SJF, 2 for ROUND ROBIN
 #define SCHED_TYPE 0
-
+#define DEBUG 1
 int queueProcess(PQueue *myQ, int priority, Process *process) {
   PQueueNode *newNode = (PQueueNode *) malloc(sizeof(PQueueNode));
   newNode->priority = priority;
@@ -160,7 +160,9 @@ void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int curre
 			if (nextProcess == NULL) {
 				//end of cpuQueue
 			} else {
-				printf("queueing p%d at %d\n", nextProcess->pid, currentTime); 
+				if (DEBUG) {
+					printf("queueing p%d at %d\n", nextProcess->pid, currentTime); 
+				}
 				Event *newEvent = (Event *) malloc(sizeof(Event));
 				newEvent->eventType = PROCESS_STARTS;
 				newEvent->process = nextProcess;
@@ -253,8 +255,10 @@ int main() {
 	currentTime = getMinPriority(&eventQueue);
 	cpuIsIdle = 1;	
 	while (event != NULL) {
-		printQueue(&eventQueue, &cpuQueue);
-		printf("handling event at %d, with Pid | type |\n", currentTime);//, event->process->pid);
+		if (DEBUG) {
+			printQueue(&eventQueue, &cpuQueue);
+			printf("handling event at %d, with Pid | type |\n", currentTime);//, event->process->pid);
+		}
 		handleEvent(event, &eventQueue, &cpuQueue, currentTime, &cpuIsIdle);	
 //		printf("getting currentTime\n");
 		currentTime = getMinPriority(&eventQueue);
