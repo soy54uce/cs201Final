@@ -260,6 +260,9 @@ int main() {
 			printf("handling event at %d, with Pid | type |\n", currentTime);//, event->process->pid);
 		}
 		handleEvent(event, &eventQueue, &cpuQueue, currentTime, &cpuIsIdle);	
+		if (DEBUG) {
+			printQueue(&eventQueue, &cpuQueue);
+		}
 //		printf("getting currentTime\n");
 		currentTime = getMinPriority(&eventQueue);
 //		printf("checking eventQueue\n");
