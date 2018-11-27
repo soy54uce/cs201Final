@@ -84,14 +84,15 @@ int printQueue(PQueue *eventQ, PQueue *cpuQ) {
   PQueueNode *currentReadyProcess = cpuQ->head;
   printf("---\neventQueue\n---\n");	
   while (currentEvent != NULL) {
-    printf("| %d %d |\n", currentEvent->priority, currentEvent->event->process->pid);
+    printf("| Priority%d P%d | %s |\n", currentEvent->priority, currentEvent->event->process->pid, getEventTypeString(currentEvent->event->eventType));
     currentEvent = currentEvent->next;
   }
   printf("---\ncpuQueue\n---\n");	
   while (currentReadyProcess != NULL) {
-    printf("| %d %d |\n", currentReadyProcess->priority, currentReadyProcess->process->pid); 
+    printf("| Priority:%d P%d burst:%d wait:%d |\n", currentReadyProcess->priority, currentReadyProcess->process->pid, currentReadyProcess->process->burstTime, currentReadyProcess->process->waitTime); 
     currentReadyProcess = currentReadyProcess->next;
   }	
+  printf("------\n");	
   return(0);
 }
 
@@ -122,10 +123,11 @@ void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int curre
 			} else {
 				Process *readyProcess = myEvent->process;
 				int priority;
-				priority = 0;
-				if (SCHED_TYPE == 2) {
+				if (SCHED_TYPE == 1) {
 					priority = readyProcess->burstTime;
-				}
+				} else {
+					priority = 0;
+				}		
 				queueProcess(cpuQueue, priority, readyProcess);
 				free(myEvent);
 			}
@@ -136,7 +138,7 @@ void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int curre
 				Event *newEvent = (Event *) malloc(sizeof(Event));
 				newEvent->eventType = PROCESS_ENDS;
 				newEvent->process = myEvent->process;
-				newEvent->process->waitTime = currentTime;
+				newEvent->process->waitTime = currentTime + newEvent->process->submittedTime;
 				queueEvent(eventQueue, currentTime + newEvent->process->burstTime, newEvent);
 				free(myEvent);
 				*idle = 0;
@@ -149,25 +151,25 @@ void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int curre
 			break;
 		case PROCESS_ENDS:
 			;//update stats about this process
-			Process *finishedProcess;
-			finishedProcess = myEvent->process;
-			printf("t = %d , %s, pid = %d\n", currentTime, getEventTypeString(myEvent->eventType), myEvent->process->pid); 
+			Process *finishedProcess = myEvent->process;
+			printf("t = %d , %s, pid = %d, waitTime = %d\n", currentTime, getEventTypeString(myEvent->eventType), finishedProcess->pid, finishedProcess->waitTime); 
 			free(myEvent);
-			Event *newEvent = (Event *) malloc(sizeof(Event));
 			Process *nextProcess;
 			nextProcess = (peek(cpuQueue) == NULL) ? NULL : dequeue(cpuQueue);
 			
 			if (nextProcess == NULL) {
-				break;
+				//end of cpuQueue
 			} else {
 				printf("queueing p%d at %d\n", nextProcess->pid, currentTime); 
+				Event *newEvent = (Event *) malloc(sizeof(Event));
 				newEvent->eventType = PROCESS_STARTS;
 				newEvent->process = nextProcess;
 				*idle = 1;
+				free(nextProcess);
 				queueEvent(eventQueue, currentTime, newEvent);
 			}
 			break;
-		case PROCESS_TIMESLICE_EXPIRES:
+		/*case PROCESS_TIMESLICE_EXPIRES:
 			printf("t = %d , PROCESS_TIMESLICE_EXPIRES, pid = %d\n", currentTime, myEvent->process->pid); 
 			//update info for this process (subtract the quantum from the burstTime for this process)
 			if (peek(cpuQueue) != NULL) {
@@ -178,7 +180,7 @@ void handleEvent(Event *myEvent, PQueue *eventQueue, PQueue *cpuQueue, int curre
 				newEvent->process = myEvent->process;
 				queueEvent(eventQueue, currentTime, newEvent);
 			} 
-			break;
+			break;*/
 	}
 }
 
@@ -252,13 +254,12 @@ int main() {
 	cpuIsIdle = 1;	
 	while (event != NULL) {
 		printQueue(&eventQueue, &cpuQueue);
-		event = (peek(&eventQueue) == NULL) ? NULL :dequeue(&eventQueue);
-//		printf("handling event\n");
+		printf("handling event at %d, with Pid | type |\n", currentTime);//, event->process->pid);
 		handleEvent(event, &eventQueue, &cpuQueue, currentTime, &cpuIsIdle);	
 //		printf("getting currentTime\n");
 		currentTime = getMinPriority(&eventQueue);
 //		printf("checking eventQueue\n");
-//		event = (peek(&eventQueue) == NULL) ? NULL :dequeue(&eventQueue);
+		event = (peek(&eventQueue) == NULL) ? NULL :dequeue(&eventQueue);
 		//printf(event);
 	}
 

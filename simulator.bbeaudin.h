@@ -8,6 +8,7 @@ typedef enum EventTypeEnum {
 typedef struct {
  int pid;
  int burstTime;
+ int submittedTime;
  int waitTime;
  int numPreemptions;
  int lastTime;
