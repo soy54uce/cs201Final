@@ -67,7 +67,7 @@ void runSimulation(
 
   event = (Event *) dequeue(&eventQueue);
   while (event != NULL) {
-    printf("--- time=%d", currentTime);
+    printf("--- time=%d\n", currentTime);
 
     print_event(event);
 
@@ -82,11 +82,11 @@ void runSimulation(
         Event *newEvent = (Event *) malloc(sizeof(Event));
         newEvent->process = process;
         newEvent->eventType = PROCESS_STARTS;
-        printf("new event at %d: PROCESS_STARTS(%d) pid=%d\n", currentTime, newEvent->eventType, process->pid);
+//        printf("new event at %d: PROCESS_STARTS(%d) pid=%d\n", currentTime, newEvent->eventType, process->pid);
         enqueue(&eventQueue, currentTime, newEvent);
         active_pid = process->pid;
       } else {
-        // put process in CPU queue (= ready state)
+        //put process in CPU queue (= ready state)
         if (schedulerType == FCFS) {
           enqueue(&cpuQueue, 0, process);
         } else if (schedulerType == SJF) {
@@ -147,6 +147,14 @@ void runSimulation(
 
 } // runSimulation()
 
+int gen_exprand(double mean) {
+ double r, t;
+ int rtnval;
+ r = drand48();
+ t = -log(1-r) * (mean - 0.5);
+ rtnval = 1 + (int) floor(t);
+ return(rtnval);
+}
 //---------------------------------------------------------------------
 
 int main(int argc, char *argv[]) {
@@ -155,13 +163,14 @@ int main(int argc, char *argv[]) {
   int numProcesses;
   int schedulerType;
   Process *process;
+  Process *proc;
   Event *event;
   PQueue eventQueue;
   PQueue cpuQueue;
 
-//these calls will be useful for part II
-//time(&seed);
-//srand48(seed);
+  //these calls will be useful for part II
+  time(&seed);
+  srand48(seed);
 
   totalWaitTime = 0;
 
@@ -169,7 +178,7 @@ int main(int argc, char *argv[]) {
   eventQueue.tail = NULL;
   cpuQueue.head = NULL;
   cpuQueue.tail = NULL;
-
+  /*
   numProcesses = 5;
   int startTimes[] = {0, 3, 4, 6, 6};
   int burstTimes[] = {6, 7, 2, 5, 2};
@@ -188,15 +197,36 @@ int main(int argc, char *argv[]) {
     event->eventType = PROCESS_SUBMITTED;
     event->process = process;
     enqueue(&eventQueue, startTimes[i], event);
-  }
+  }*/
 
-  schedulerType = FCFS; // or SJF
+  double proc_interarrival_time_mean = 10;
+  double proc_burst_time_mean = 5;
+  int proc_interarrival_time, t;
+  int nprocesses;
+  nprocesses = 50;
+  t = 0;
+  for (i=0; i<nprocesses; ++i) {
+    proc = (Process *) malloc(sizeof(Process));
+    proc->pid = i+1; // start the process IDs at 1 instead of zero
+    proc->waitTime = 0;
+    proc->lastTime = 0;
+    proc->numPreemptions = 0;
+    proc->burstTime = gen_exprand(proc_burst_time_mean);
+    // now create new PROCESS_SUBMITTED event for this proc, at time = t
+    event = (Event *) malloc(sizeof(Event));
+    event->eventType = PROCESS_SUBMITTED;
+    event->process = proc;
+    enqueue(&eventQueue, t, event);
+    proc_interarrival_time = gen_exprand(proc_interarrival_time_mean);
+    t = t + proc_interarrival_time;
+  }
+  schedulerType = SJF; // or FCFS
 
   runSimulation(schedulerType, eventQueue, cpuQueue);
 
   printf("\n");
   printf("total wait time = %d\n", totalWaitTime);
-  printf("mean wait time = %.2f\n", (float) totalWaitTime / numProcesses);
+  printf("mean wait time = %.2f\n", (float) totalWaitTime / nprocesses);
   return(0);
 }
 
