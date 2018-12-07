@@ -61,6 +61,7 @@ void runSimulation(
   Process *process;
   int active_pid;
   int readyQueueLength;
+  int quantum;
 
   active_pid = -1;
   currentTime = getMinPriority(&eventQueue);
@@ -82,7 +83,7 @@ void runSimulation(
         Event *newEvent = (Event *) malloc(sizeof(Event));
         newEvent->process = process;
         newEvent->eventType = PROCESS_STARTS;
-//        printf("new event at %d: PROCESS_STARTS(%d) pid=%d\n", currentTime, newEvent->eventType, process->pid);
+        printf("new event at %d: PROCESS_STARTS(%d) pid=%d\n", currentTime, newEvent->eventType, process->pid);
         enqueue(&eventQueue, currentTime, newEvent);
         active_pid = process->pid;
       } else {
@@ -93,6 +94,7 @@ void runSimulation(
           enqueue(&cpuQueue, process->burstTime, process);
         } else if (schedulerType == RR) {
           // do this for part III
+	  enqueue(&cpuQueue, 0, process);
         }
       } // if-then-else for cpu is idle
     } // PROCESS_SUBMITTED
@@ -116,7 +118,19 @@ void runSimulation(
     } // PROCESS_ENDS
 
     else if (event->eventType == PROCESS_TIMESLICE_EXPIRES) {
-      // to be filled in
+      // update info for this process
+      process = event->process;
+      process->burstTime = process->burstTime - quantum;
+      enqueue(&cpuQueue, 0, process);
+      // check cpu queue
+      process = (Process *) dequeue(&cpuQueue);
+      if (process != NULL) {
+        endEvent = (Event *) malloc(sizeof(Event));
+        endEvent->process = process;
+        endEvent->eventType = PROCESS_STARTS;
+        printf("new event at %d: PROCESS_STARTS(%d) pid=%d\n", currentTime, endEvent->eventType, process->pid);
+        enqueue(&eventQueue, currentTime, endEvent);
+      }
     } // PROCESS_TIMESLICE_EXPIRES
 
     else if (event->eventType == PROCESS_STARTS) {
@@ -130,7 +144,16 @@ void runSimulation(
       endEvent->process = process;
 
       if (schedulerType == RR) {
-        // to be filled in
+        // 
+	if (process->burstTime > quantum) {
+	  endEvent->eventType = PROCESS_TIMESLICE_EXPIRES;
+          printf("new event at %d: PROCESS_TIMESLICE_EXPIRES(%d) pid=%d\n", currentTime + quantum, endEvent->eventType, process->pid);
+	  enqueue(&eventQueue, currentTime + quantum, endEvent);
+	} else if (process->burstTime > 0) {
+	  endEvent->eventType = PROCESS_ENDS;
+          printf("new event at %d: PROCESS_ENDS(%d) pid=%d\n", currentTime + process->burstTime, endEvent->eventType, process->pid);
+	  enqueue(&eventQueue, currentTime + process->burstTime, endEvent);
+	}
       } else {
         endEvent->eventType = PROCESS_ENDS;
         printf("new event at %d: PROCESS_ENDS(%d) pid=%d\n", currentTime + process->burstTime, endEvent->eventType, process->pid);
@@ -160,7 +183,7 @@ int gen_exprand(double mean) {
 int main(int argc, char *argv[]) {
   int i;
   long seed;
-  int numProcesses;
+  int nprocesses;
   int schedulerType;
   Process *process;
   Process *proc;
@@ -178,12 +201,12 @@ int main(int argc, char *argv[]) {
   eventQueue.tail = NULL;
   cpuQueue.head = NULL;
   cpuQueue.tail = NULL;
-  /*
-  numProcesses = 5;
+  
+  nprocesses = 5;
   int startTimes[] = {0, 3, 4, 6, 6};
   int burstTimes[] = {6, 7, 2, 5, 2};
 
-  for (i=0; i<numProcesses; ++i) {
+  for (i=0; i<nprocesses; ++i) {
     process = (Process *) malloc(sizeof(Process));
     process->pid = i+1; // start the PIDs at one instead of zero
     process->burstTime = burstTimes[i];
@@ -197,9 +220,9 @@ int main(int argc, char *argv[]) {
     event->eventType = PROCESS_SUBMITTED;
     event->process = process;
     enqueue(&eventQueue, startTimes[i], event);
-  }*/
+  }
 
-  double proc_interarrival_time_mean = 10;
+  /*double proc_interarrival_time_mean = 10;
   double proc_burst_time_mean = 5;
   int proc_interarrival_time, t;
   int nprocesses;
@@ -219,8 +242,8 @@ int main(int argc, char *argv[]) {
     enqueue(&eventQueue, t, event);
     proc_interarrival_time = gen_exprand(proc_interarrival_time_mean);
     t = t + proc_interarrival_time;
-  }
-  schedulerType = SJF; // or FCFS
+  }*/
+  schedulerType = RR; 
 
   runSimulation(schedulerType, eventQueue, cpuQueue);
 
