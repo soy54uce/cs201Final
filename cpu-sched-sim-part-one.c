@@ -8,7 +8,7 @@
 #define SJF 1
 #define FCFS 2
 #define RR 3
-
+#define DEBUG 0
 //----------------------------------------------------------------------
 
 typedef struct {
@@ -37,11 +37,11 @@ int totalWaitTime;
 
 void print_event(Event *event) {
   if (event->eventType == PROCESS_SUBMITTED)
-    printf(" PROCESS_SUBMITTED");
+    printf(" PROCESS_SUBMITTED        ");
   else if (event->eventType == PROCESS_STARTS)
-    printf(" PROCESS_STARTS");
+    printf(" PROCESS_STARTS           ");
   else if (event->eventType == PROCESS_ENDS)
-    printf(" PROCESS_ENDS");
+    printf(" PROCESS_ENDS             ");
   else if (event->eventType == PROCESS_TIMESLICE_EXPIRES)
     printf(" PROCESS_TIMESLICE_EXPIRES");
   printf(" pid=%d", event->process->pid);
@@ -64,18 +64,19 @@ void runSimulation(
   int quantum;
 
   active_pid = -1;
+  quantum = 4;
   currentTime = getMinPriority(&eventQueue);
 
   event = (Event *) dequeue(&eventQueue);
   while (event != NULL) {
-    printf("--- time=%d\n", currentTime);
+    printf("--- t=%3d", currentTime);
 
     print_event(event);
 
     if (event->eventType == PROCESS_SUBMITTED) {
       process = event->process;
 
-      printf("at time %d, enqueue process %d\n", currentTime, process->pid);
+      if (DEBUG) {printf("at time %d, enqueue process %d\n", currentTime, process->pid);}
 
       process->lastTime = currentTime;
 
@@ -83,7 +84,7 @@ void runSimulation(
         Event *newEvent = (Event *) malloc(sizeof(Event));
         newEvent->process = process;
         newEvent->eventType = PROCESS_STARTS;
-        printf("new event at %d: PROCESS_STARTS(%d) pid=%d\n", currentTime, newEvent->eventType, process->pid);
+        if (DEBUG) {printf("new event at %d: PROCESS_STARTS(%d) pid=%d\n", currentTime, newEvent->eventType, process->pid);}
         enqueue(&eventQueue, currentTime, newEvent);
         active_pid = process->pid;
       } else {
@@ -102,8 +103,8 @@ void runSimulation(
     else if (event->eventType == PROCESS_ENDS) {
       active_pid = -1;
       process = event->process;
-      printf("process %d finishes at %d, waitTime=%d\n", process->pid, currentTime, process->waitTime);
-      printf("* P%d finishes at %d\n", process->pid, currentTime);
+      if (DEBUG) {printf("process %d finishes at %d, waitTime=%d\n", process->pid, currentTime, process->waitTime);
+      printf("* P%d finishes at %d\n", process->pid, currentTime);}
       totalWaitTime = totalWaitTime + process->waitTime;
 
       // check cpu queue
@@ -112,7 +113,7 @@ void runSimulation(
         endEvent = (Event *) malloc(sizeof(Event));
         endEvent->process = process;
         endEvent->eventType = PROCESS_STARTS;
-        printf("new event at %d: PROCESS_STARTS(%d) pid=%d\n", currentTime, endEvent->eventType, process->pid);
+        if (DEBUG) {printf("new event at %d: PROCESS_STARTS(%d) pid=%d\n", currentTime, endEvent->eventType, process->pid);}
         enqueue(&eventQueue, currentTime, endEvent);
       }
     } // PROCESS_ENDS
@@ -120,7 +121,8 @@ void runSimulation(
     else if (event->eventType == PROCESS_TIMESLICE_EXPIRES) {
       // update info for this process
       process = event->process;
-      process->burstTime = process->burstTime - quantum;
+      process->burstTime = process->burstTime - quantum;   
+      process->lastTime = currentTime;
       enqueue(&cpuQueue, 0, process);
       // check cpu queue
       process = (Process *) dequeue(&cpuQueue);
@@ -128,7 +130,7 @@ void runSimulation(
         endEvent = (Event *) malloc(sizeof(Event));
         endEvent->process = process;
         endEvent->eventType = PROCESS_STARTS;
-        printf("new event at %d: PROCESS_STARTS(%d) pid=%d\n", currentTime, endEvent->eventType, process->pid);
+        if (DEBUG) {printf("new event at %d: PROCESS_STARTS(%d) pid=%d\n", currentTime, endEvent->eventType, process->pid);}
         enqueue(&eventQueue, currentTime, endEvent);
       }
     } // PROCESS_TIMESLICE_EXPIRES
@@ -136,27 +138,27 @@ void runSimulation(
     else if (event->eventType == PROCESS_STARTS) {
       process = event->process;
       process->waitTime = process->waitTime + (currentTime - process->lastTime);
+      if (DEBUG) { 
       printf("* P%d starts at %d (wt=%d, %d)\n",
              process->pid, currentTime,
-             currentTime - process->lastTime, process->waitTime);
-
+             currentTime - process->burstTime, process->waitTime);
+      }
       endEvent = (Event *) malloc(sizeof(Event));
       endEvent->process = process;
 
       if (schedulerType == RR) {
-        // 
 	if (process->burstTime > quantum) {
 	  endEvent->eventType = PROCESS_TIMESLICE_EXPIRES;
-          printf("new event at %d: PROCESS_TIMESLICE_EXPIRES(%d) pid=%d\n", currentTime + quantum, endEvent->eventType, process->pid);
+          if (DEBUG) {printf("new event at %d: PROCESS_TIMESLICE_EXPIRES(%d) pid=%d\n", currentTime + quantum, endEvent->eventType, process->pid);}
 	  enqueue(&eventQueue, currentTime + quantum, endEvent);
 	} else if (process->burstTime > 0) {
 	  endEvent->eventType = PROCESS_ENDS;
-          printf("new event at %d: PROCESS_ENDS(%d) pid=%d\n", currentTime + process->burstTime, endEvent->eventType, process->pid);
+          if (DEBUG) {printf("new event at %d: PROCESS_ENDS(%d) pid=%d\n", currentTime + process->burstTime, endEvent->eventType, process->pid);}
 	  enqueue(&eventQueue, currentTime + process->burstTime, endEvent);
 	}
       } else {
         endEvent->eventType = PROCESS_ENDS;
-        printf("new event at %d: PROCESS_ENDS(%d) pid=%d\n", currentTime + process->burstTime, endEvent->eventType, process->pid);
+        if (DEBUG) {printf("new event at %d: PROCESS_ENDS(%d) pid=%d\n", currentTime + process->burstTime, endEvent->eventType, process->pid);}
         enqueue(&eventQueue, currentTime + process->burstTime, endEvent);
       }
 
@@ -214,7 +216,7 @@ int main(int argc, char *argv[]) {
     process->numPreemptions = 0;
     process->lastTime = 0;
 
-    printf("created process %d; burstTime = %d start_time=%d\n", process->pid, process->burstTime, startTimes[i]);
+    //printf("created process %d; burstTime = %d start_time=%d\n", process->pid, process->burstTime, startTimes[i]);
 
     event = (Event *) malloc(sizeof(Event));
     event->eventType = PROCESS_SUBMITTED;
@@ -222,11 +224,12 @@ int main(int argc, char *argv[]) {
     enqueue(&eventQueue, startTimes[i], event);
   }
 
-  /*double proc_interarrival_time_mean = 10;
-  double proc_burst_time_mean = 5;
+  // random process block 
+  /*
+  double proc_interarrival_time_mean = 10;
+  double proc_burst_time_mean = 10;
   int proc_interarrival_time, t;
-  int nprocesses;
-  nprocesses = 50;
+  nprocesses = 20;
   t = 0;
   for (i=0; i<nprocesses; ++i) {
     proc = (Process *) malloc(sizeof(Process));
@@ -242,7 +245,8 @@ int main(int argc, char *argv[]) {
     enqueue(&eventQueue, t, event);
     proc_interarrival_time = gen_exprand(proc_interarrival_time_mean);
     t = t + proc_interarrival_time;
-  }*/
+  }
+  */
   schedulerType = RR; 
 
   runSimulation(schedulerType, eventQueue, cpuQueue);
